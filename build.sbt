@@ -1,4 +1,4 @@
-name := "partial-unification"
+name := "herding-cats"
 
 version := "0.1"
 
