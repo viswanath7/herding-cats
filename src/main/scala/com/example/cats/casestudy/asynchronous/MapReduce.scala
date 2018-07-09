@@ -1,10 +1,10 @@
 package com.example.cats.casestudy.asynchronous
-import cats.{Foldable, Monoid, Traverse}
 import cats.instances.future._
 import cats.instances.vector._
 import cats.syntax.foldable._
 import cats.syntax.semigroup._
 import cats.syntax.traverse._
+import cats.{Foldable, Monoid, Traverse}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -26,7 +26,7 @@ class MapReduce {
 		*/
 	def parallelFoldMapV1[A, B : Monoid](batchInput: Vector[A])(transformation: A => B): Future[B] = {
 		// The data type Vector is used as we're using 'grouped' method
-		// Vedctor provides fast random access
+		// Vector provides fast random access
 		
 		val partitionSize: Int = (batchInput.size.toDouble / availableCores).ceil.toInt
 		
@@ -67,7 +67,7 @@ class MapReduce {
 	/**
 		* Equivalent version of fold map that utilises Cat's traversable and foldable
 		*/
-	def parallelFoldMapV3[A, B : Monoid](batchInput: Vector[A])(transformation: A => B) = {
+	def parallelFoldMap[A, B : Monoid](batchInput: Vector[A])(transformation: A => B) = {
 		
 		
 		
@@ -96,9 +96,50 @@ object MapReduce extends App {
 	
 	private val eventualResult1: Future[Int] = mapReduce.parallelFoldMapV1( (1 to 10).toVector )(identity)
 	private val eventualResult2: Future[Int] = mapReduce.parallelFoldMapV2( (1 to 100).toVector )(identity)
-	private val eventualResult3: Future[Int] = mapReduce.parallelFoldMapV3( (1 to 1000).toVector )(identity)
+	private val eventualResult3: Future[Int] = mapReduce.parallelFoldMap( (1 to 1000).toVector )(identity)
 	
 	println(s"Sum of numbers in range 1 to 10: ${Await.result(eventualResult1, 2 seconds)}")
 	println(s"Sum of numbers in range 1 to 100: ${Await.result(eventualResult2, 2 seconds)}")
 	println(s"Sum of numbers in range 1 to 1000: ${Await.result(eventualResult3, 2 seconds)}")
+}
+
+
+
+
+object WordCount extends App {
+	
+	import MonoidInstance.{T, traversableTuplesMonoid}
+	import cats.instances.string._
+
+	import scala.collection.immutable.ListMap
+	import scala.concurrent.Await
+	import scala.concurrent.duration._
+	import scala.language.postfixOps
+	
+	val mapReduce = new MapReduce
+	
+	val linesOfText = "Betty Botter bought some butter " +
+		"But she said this butter is bitter " +
+		"If I put it in my batter " +
+		"It will make my batter bitter " +
+		"But a bit of better butter " +
+		"Will surely make my batter better " +
+		"So she bought a bit of butter " +
+		"Better than her bitter butter " +
+		"And she put it in her batter " +
+		"And her batter was not bitter " +
+		"So it was better Betty Botter " +
+		"Bought a bit of better butter "
+	
+	def getWords(input:String) = input.split("\\W+").map(_.toLowerCase).toVector
+	
+	
+	private val stringToTraversableTuples: String => T[String, Int] =
+		word => List[Tuple2[String, Int]]( (word, 1) )
+	
+	val eventualResult = mapReduce.parallelFoldMap( getWords(linesOfText) )(stringToTraversableTuples)
+	val wordCount: T[String, Int] = Await.result(eventualResult, 2 seconds)
+	val sortedResult: ListMap[String, Int] = ListMap(wordCount.toSeq.sortBy(_._1):_*)
+	
+	println(s"Word count in text: ${ sortedResult }")
 }
