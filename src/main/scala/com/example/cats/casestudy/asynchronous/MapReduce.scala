@@ -94,12 +94,12 @@ object MapReduce extends App {
 	
 	val mapReduce = new MapReduce
 	
-	private val eventualResult1: Future[Int] = mapReduce.parallelFoldMapV1( (1 to 10).toVector )(identity)
-	private val eventualResult2: Future[Int] = mapReduce.parallelFoldMapV2( (1 to 100).toVector )(identity)
+	/*private val eventualResult1: Future[Int] = mapReduce.parallelFoldMapV1( (1 to 10).toVector )(identity)
+	private val eventualResult2: Future[Int] = mapReduce.parallelFoldMapV2( (1 to 100).toVector )(identity)*/
 	private val eventualResult3: Future[Int] = mapReduce.parallelFoldMap( (1 to 1000).toVector )(identity)
 	
-	println(s"Sum of numbers in range 1 to 10: ${Await.result(eventualResult1, 2 seconds)}")
-	println(s"Sum of numbers in range 1 to 100: ${Await.result(eventualResult2, 2 seconds)}")
+	/*println(s"Sum of numbers in range 1 to 10: ${Await.result(eventualResult1, 2 seconds)}")
+	println(s"Sum of numbers in range 1 to 100: ${Await.result(eventualResult2, 2 seconds)}")*/
 	println(s"Sum of numbers in range 1 to 1000: ${Await.result(eventualResult3, 2 seconds)}")
 }
 
